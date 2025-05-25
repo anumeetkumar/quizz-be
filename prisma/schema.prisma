@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  password      String
+  name          String
+  createdQuizzes Quiz[]       @relation("CreatedQuizzes")
+  attempts      QuizAttempt[] 
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+
+model Quiz {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String?
+  timeLimit    Int           // Time limit in minutes
+  isPublic     Boolean       @default(true)
+  author       User          @relation("CreatedQuizzes", fields: [authorId], references: [id])
+  authorId     Int
+  questions    Question[]
+  attempts     QuizAttempt[]
+  topic        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Question {
+  id          Int      @id @default(autoincrement())
+  quizId      Int
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  text        String
+  options     Option[] @relation("QuestionOptions")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Option {
+  id             Int        @id @default(autoincrement())
+  text           String?
+  isCorrect      Boolean    @default(false)
+  questions      Question[] @relation("QuestionOptions")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model QuizAttempt {
+  id        Int       @id @default(autoincrement())
+  quiz      Quiz      @relation(fields: [quizId], references: [id])
+  quizId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  score     Int
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  answers   Json      // Stores user's answers
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
