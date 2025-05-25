@@ -198,6 +198,32 @@ router.get("/", async (req, res) => {
 
     let whereClause = {};
 
+    // Check if an ID is provided to fetch a single quiz
+    if (id) {
+      const quiz = await prisma.quiz.findUnique({
+        where: { id: +id },
+        include: {
+          questions: {
+            include: {
+              options: true,
+            },
+          },
+        },
+      });
+
+      if (!quiz) {
+        return res.status(404).json({
+          success: false,
+          message: "Quiz not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: quiz,
+      });
+    }
+
     if (id) {
       // Fetch a single quiz by ID
       whereClause = { id: +id };
@@ -222,7 +248,7 @@ router.get("/", async (req, res) => {
 
     const quizzes = await prisma.quiz.findMany({
       where: whereClause,
-      include: { questions: true }, // Include nested questions and options
+      include: { questions: true }, // Include nested questions
     });
 
     res.status(200).json({
